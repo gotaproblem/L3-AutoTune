@@ -1,0 +1,136 @@
+README
+Antminer L3+ Voltage Control tool
+
+cryptodad (C) 2018
+
+v1.0	- Initial release
+v1.1	- altered auto-tune options. Now can tune with a start and end frequency
+v1.2	- monitor ASIC chip temperature whilst auto-tuning
+v1.3 	- added -e option, enhanced -r option output
+		- hopefully resolved the "Wrong PIC version" message
+v1.4	- added fan mode and speed % + some code tidying
+v1.5	- added estimated power to  -r option
+v1.6	- fixed ioctl error
+v1.7	- tidying up output text
+v1.8	- added hashrate to monitor output
+
+
+This tool was written after having used the Blissz firmware. It is very good, but I do not like the constant paying for 
+something. If I like it, I pay once!
+I later found a free tool that set voltages, but it expected the user to input hexadecimal values, which isn't exactly 
+user friendly. I attempted contact with the author, but never received a reply.
+
+So, the birth of 'at' (auto tune).
+
+AutoTune (at) is a Linux command line tool. It needs to be installed on the L3+ Antminer in the /config directory.
+
+Installation
+	I am only supplying instructions for Windows 10 as I have never used Apple equipment. 
+	The following instructions are not for a novice.
+
+	copy two files 'at' and 'at.conf' to your Antminer L3+
+		open a cmd window
+			scp at* root@<antminer ip address>:/config
+		you will be prompted for your Antminer root password - the default is root unless you have changed it
+
+	execute the tool
+		in the same cmd window
+			ssh root@<antminer ip address>
+		you will be prompted for your Antminer root password
+			cd /config
+		do the following once - need to make it executable
+			chmod +x ./at
+		now run the following command
+			./at -r 
+		A list of the current hash-board voltages will be displayed
+		
+Options
+	-a <time 1 to 10> {<start frequency> <end frequency>} auto-tune all hash boards for the current frequency
+	   or auto-tune from the start frequency through to end frequency if arguments supplied
+	-b restart miner
+	-c <speed percentage 50 to 99> set fan speed - will restart the miner
+	-h display help
+	-f <frequency 375 to 500> set frequency for all hash boards
+	-m <target temperature 45 to 70 C> monitor chip temperatures and reduce frequency to keep below set 
+	   temperature
+	-r read hash board voltages, temperatures, power and fan speed / mode 
+	-v <hash board 1-4> <voltage 9.0 to 11.0> set hash board voltage
+	-s shutdown Antminer - stops the mining process and temporarily halts the OS, allowing a safe power-off
+
+Example
+	./at -f 400
+		sets all hash boards to 400MHz and restarts miner
+	./at -a 1
+		starts auto-tune for the current frequency with a 1 minute test per voltage increment.
+		
+	Auto-tune initially sets each hash board voltage to 9.0v
+	The miner will mine for the chosen time (in this example, it's 1 minute)
+	The voltage will be increased by 0.1v until no more than 1 HW error per minute is seen.
+	In theory, we can increase the voltage to 11.0v, but I have not tried beyond 10.5v. At completion, the voltages 
+	are recorded in at.conf.
+	
+Since v1.1, auto-tune can now tune between a start frequency and end frequency. This is the preferred way of
+using the feature.
+
+Example
+	./at -a 5 400 500
+		auto-tune starting at 400MHz with 5 minutes of mining per voltage increment. Auto-tune will stop after 500MHz
+		tuning has completed
+	
+	WARNING:
+	when auto-tuning, you MUST monitor your ASIC chip temperatures. Personally, I do not like going over 70C. 
+	
+	NOTE:
+	longer tuning times are preferred (greater than 5 minutes), as after every successful tune, the Antminer is
+	restarted, which allows cooling off. From tests, it takes around 5 minutes to stabalise again.
+
+If you intend to use the -m option (temperature monitor), then it is suggested you run -a (auto tune) on all 
+frequencies you intend to operate over. If -m were to reduce the frequency to a non-tuned frequency then it is likely 
+the temperature would increase as it would default to 10.0v per hash-board, which would increase the temperatures, 
+thus resulting in further frequency drops.
+
+-----------------------------------------------------------------------------------------------------------------------	
+	
+NOTES:
+The Bitmain specification for the L3+ states input voltages of up to 13v are allowed. They also state that higher 
+efficiencies come with higher voltages.
+Computer power supplies, used to provide power to the Antminer, are rated at 12v. However, they are never accurate. 
+When measured, you will likely see anything from 11v to 13v, hence Bitmain's statement on input voltage range as the 
+L3+ does not have any voltage regulation.
+This tool tunes the voltage by altering values to the PIC controller. My scale of 9.0v to 11.0v is for reference only,
+as the voltages are not actually tuned to these values - again, that's because there is no voltage regulation. 
+Everything is referenced to the DC input voltage.
+
+Since v1.5, estimated power is displayed in the output of -r. These values are an attempt to show the power usage of
+each hashboard on the Antminer side. You must then convert the values to match your power supplies efficiency rating.
+For example, if -r reports total power of 800w, and your power supply has an efficiency rating of 93%, then the 
+"at wall" estimated power will be 800 * 1.07 = 856w.
+
+-----------------------------------------------------------------------------------------------------------------------	
+
+TROUBLE SHOOTING:
+	Wrong PIC Version:
+	If seen at first use then the software will not run on your Antminer.
+	If seen during a tuning session, then it is likely caused by contention with Bitmain's drivers. In which case
+	the only way to clear, is an Antminer power-cycle.
+	
+	Ioctl error:
+	If seen during a tuning session, then it is likely caused by contention with Bitmain's drivers. In which case
+	the only way to clear, is an Antminer power-cycle.
+	
+-----------------------------------------------------------------------------------------------------------------------	
+
+DISCLAIMER:
+Use of this tool may break your hardware. Use at your discretion.
+I will not be held accountable for any misuse or any hardware failures resulting from the use of this tool.
+
+-----------------------------------------------------------------------------------------------------------------------	
+
+HONESTY TIN:
+It takes a lot of time writing programmes like this, so if you find this tool of benefit, perhaps you could show your 
+appreciation by donating:
+	BTC: 15nYj1kRGPE6hbi5ZfXpQhM6gMxYuKKnwa
+	LTC: MHjzDnpTPFjiSTRryikyGt2jKXpuCySSue
+	ETH: 0x16f383E5c8951eDCFC18c2030305004Ce7fb0828
+	
+cryptodad (C)2018
